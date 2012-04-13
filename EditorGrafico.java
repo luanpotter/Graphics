@@ -9,22 +9,20 @@ import java.util.ArrayList;
 public class EditorGrafico extends JFrame {
 
     private LButton[] botoes;
-    private JLabel status;
-    private JPanel pnlBotoes;  // container dos botıes acima
+    private JLabel status, coords;
+    private JPanel pnlBotoes;  // container dos bot√µes acima
     private JDesktopPane deskframe;
-
     private ArrayList<Desenho> desenhos;
     private int desenhoAtual, operacaoAtual, estadoOperacao;
     private Color corAtual, corFundo;
     private Figura[] temp;
-
     private static int LARGURA_INICIAL = 400, ALTURA_INICIAL = 200;
 
-    public EditorGrafico() // construtor de Editor que criar· o JFrame, colocar· seu
-    {   // tÌtulo, estabelecer· um tamanho para o formul·rio e o exibir·
-        super("Editor Gr·fico"); // cria o JFrame e coloca um tÌtulo
+    public EditorGrafico() // construtor de Editor que criar√° o JFrame, colocar√° seu
+    {   // t√≠tulo, estabelecer√° um tamanho para o formul√°rio e o exibir√°
+        super("Editor Gr√°fico"); // cria o JFrame e coloca um t√≠tulo
 
-        this.addWindowListener(new WindowAdapter() { // cria inst‚ncia da interface
+        this.addWindowListener(new WindowAdapter() { // cria inst√¢ncia da interface
 
             @Override
             public void windowClosing(WindowEvent e) {
@@ -32,29 +30,36 @@ public class EditorGrafico extends JFrame {
             }
         });
 
-        // mÈtodo para procurar pastas System.getProperty("string com o nome da propriedade desejada")
-        botoes = new LButton[4];
+        // m√©todo para procurar pastas System.getProperty("string com o nome da propriedade desejada")
+        botoes = new LButton[6];
         botoes[0] = new LButton("abrir", 0, "Escolha o arquivo que deseja abrir.", "Abrir um arquivo");
         botoes[1] = new LButton("salvar", 1, "Escolha o arquivo em que deseja salvar.", "Salvar em um arquivo");
         botoes[2] = new LButton("ponto", 6, "Clique no local do ponto que deseja desenhar.", "Desenhar um ponto");
         botoes[3] = new LButton("linha", 7, "Clique no primeiro ponto da linha.", "Desenhar uma linha");
+        botoes[4] = new LButton("circulo", 8, "Clique no centro do c√≠rculo.", "Desenhar um c√≠rculo");
+        botoes[5] = new LButton("elipse", 9, "Clique em um dos v√©rtices do ret√¢ngulo que circunscreve a elipse.", "Desenhar uma elipse");
 
-        // cria o JPanel que armazenar· os botıes
+        // cria o JPanel que armazenar√° os bot√µes
         pnlBotoes = new JPanel();
 
         pnlBotoes.setLayout(new FlowLayout());
         for (int i = 0; i < botoes.length; i++)
             pnlBotoes.add(botoes[i]);
 
-        setSize(700, 500); // dimensıes do formul·rio em pixels
-        setVisible(true); // exibe o formul·rio
+        setSize(700, 500); // dimens√µes do formul√°rio em pixels
+        setVisible(true); // exibe o formul√°rio
 
-        Container cntForm = this.getContentPane(); // acessa o painel de conte˙do do frame
+        Container cntForm = this.getContentPane(); // acessa o painel de conte√∫do do frame
         cntForm.setLayout(new BorderLayout());
         cntForm.add(pnlBotoes, BorderLayout.NORTH);
 
         status = new JLabel("Bem vindo!");
-        cntForm.add(status, BorderLayout.SOUTH);
+        coords = new JLabel("x: 0, y: 0");
+        JPanel labels = new JPanel();
+        labels.setLayout(new BorderLayout());
+        labels.add(status, BorderLayout.CENTER);
+        labels.add(coords, BorderLayout.EAST);
+        cntForm.add(labels, BorderLayout.SOUTH);
 
         deskframe = new JDesktopPane();
         cntForm.add(deskframe, BorderLayout.CENTER);
@@ -78,26 +83,24 @@ public class EditorGrafico extends JFrame {
         AreaDesenho desenho;
 
         public Desenho() {
-            super("Novo", true, true, true, true);
-            desenho = new AreaDesenho(new ContextoGrafico(0, 0, LARGURA_INICIAL, ALTURA_INICIAL, LARGURA_INICIAL, ALTURA_INICIAL), new ListaSimples());
-            this.add(desenho);
-
-            this.setSize(LARGURA_INICIAL, ALTURA_INICIAL);
-            this.show();
-            this.setOpaque(true);
+            this("Novo", new ListaSimples(), new ContextoGrafico(LARGURA_INICIAL, 0, 0, ALTURA_INICIAL, LARGURA_INICIAL, ALTURA_INICIAL), LARGURA_INICIAL, ALTURA_INICIAL);
         }
 
         public Desenho(String nome, ListaSimples l, ContextoGrafico c) {
+            this(nome, l, c, (int) (EditorGrafico.super.getWidth() / 2), (int) (EditorGrafico.super.getHeight() / 2));
+        }
+
+        public Desenho(String nome, ListaSimples l, ContextoGrafico c, int w, int h) {
             super(nome, true, true, true, true);
             desenho = new AreaDesenho(c, l);
             this.add(desenho);
 
-            this.setSize(this.getWidth() / 2, this.getHeight() / 2);
+            this.setSize(w, h);
             this.setOpaque(true);
             this.setVisible(true);
         }
 
-        private class AreaDesenho extends JPanel implements MouseListener {
+        private class AreaDesenho extends JPanel implements MouseListener, MouseMotionListener {
 
             ContextoGrafico contextoGrafico;
             ListaSimples figuras;
@@ -107,6 +110,7 @@ public class EditorGrafico extends JFrame {
                 this.contextoGrafico = contextoGrafico;
                 this.figuras = figuras;
                 this.addMouseListener(this);
+                this.addMouseMotionListener(this);
             }
 
             @Override
@@ -114,7 +118,7 @@ public class EditorGrafico extends JFrame {
                 figuras.iniciarPercurso();
                 while (figuras.podeAvancar()) {
                     try {
-                        ((Ponto) figuras.getAtual()).desenhar(g, contextoGrafico);
+                        ((Figura) figuras.getAtual()).desenhar(g, contextoGrafico);
                     } catch (Exception ex) {
                     }
                     figuras.avancar();
@@ -124,26 +128,26 @@ public class EditorGrafico extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 AreaDesenho des = desenhos.get(desenhoAtual).desenho;
+                ContextoGrafico c = des.contextoGrafico;
                 switch (operacaoAtual) {
                     case 6: {
-                        Ponto p = new Ponto (des.contextoGrafico.desconverteX(e.getX()), des.contextoGrafico.desconverteY(e.getY()), corAtual, 0);
-                        des.figuras.incluirDadoAoFinal (p);
-                        //des.repaint();
+                        Ponto p = new Ponto(des.contextoGrafico.desconverteX(e.getX()), des.contextoGrafico.desconverteY(e.getY()), corAtual, 0);
+                        des.figuras.incluirDadoAoFinal(p);
                         p.desenhar(des.getGraphics(), des.contextoGrafico);
                         break;
                     }
-                    case 7 : {
+                    case 7: {
                         if (estadoOperacao == 0) {
-                            temp = new Figura [1];
-                            temp[0] = new Ponto (des.contextoGrafico.desconverteX(e.getX()), des.contextoGrafico.desconverteY(e.getY()), corAtual, 0);
+                            temp = new Figura[1];
+                            temp[0] = new Ponto(c.desconverteX(e.getX()), c.desconverteY(e.getY()), corAtual, 0);
                             estadoOperacao = 1;
                             status.setText("Agora, clique no outro ponto da reta.");
                         } else {
-                            Linha l = new Linha (temp[0].x, temp[0].y, des.contextoGrafico.desconverteX(e.getX()), des.contextoGrafico.desconverteY(e.getY()), corAtual, 0);
-                            des.figuras.incluirDadoAoFinal (l);
+                            Linha l = new Linha(temp[0].getX(), temp[0].getY(), c.desconverteX(e.getX()), c.desconverteY(e.getY()), corAtual, 0);
+                            des.figuras.incluirDadoAoFinal(l);
                             l.desenhar(des.getGraphics(), des.contextoGrafico);
                             estadoOperacao = 0;
-                            status.setText ("Clique no primeiro ponto da linha");
+                            status.setText("Clique no primeiro ponto da linha");
                         }
                         break;
                     }
@@ -164,6 +168,16 @@ public class EditorGrafico extends JFrame {
 
             @Override
             public void mouseExited(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                ContextoGrafico c = desenhos.get(desenhoAtual).desenho.contextoGrafico;
+                coords.setText("x: " + c.desconverteX(e.getX()) + ", y: " + c.desconverteY(e.getY()));
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
             }
         }
     }
@@ -203,7 +217,7 @@ public class EditorGrafico extends JFrame {
                     desenhoAtual = desenhos.size();
                     desenhos.add(d);
                 } else {
-                    if (JOptionPane.showConfirmDialog(this, "Mensagem", "AplicaÁ„o", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.CANCEL_OPTION)
+                    if (JOptionPane.showConfirmDialog(this, "Mensagem", "Aplica√ß√£o", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.CANCEL_OPTION)
                         return;
                     deskframe.remove(desenhos.get(desenhoAtual));
                     desenhos.set(desenhoAtual, d);
@@ -211,11 +225,11 @@ public class EditorGrafico extends JFrame {
                 deskframe.add(desenhos.get(desenhoAtual));
                 status.setText("Arquivo aberto com sucesso.");
             } catch (FileNotFoundException ex) {
-                status.setText("Arquivo n„o encontrado.");
+                status.setText("Arquivo n√£o encontrado.");
             } catch (IOException ex) {
                 status.setText("Erro na leitura do arquivo.");
             } catch (Exception ex) {
-                status.setText("Arquivo inv·lido.");
+                status.setText("Arquivo inv√°lido.");
             }
         }
 
@@ -224,7 +238,7 @@ public class EditorGrafico extends JFrame {
 
     public void salvarArquivo() {
         if (desenhoAtual == -1) {
-            status.setText("VocÍ deve selecionar o desenho que deseja salvar.");
+            status.setText("Voc√™ deve selecionar o desenho que deseja salvar.");
             return;
         }
         JFileChooser arqEscolhido = new JFileChooser();
@@ -246,7 +260,7 @@ public class EditorGrafico extends JFrame {
             } catch (IOException ex) {
                 status.setText("Erro na escrita do arquivo.");
             } catch (Exception ex) {
-                status.setText("Arquivo inv·lido.");
+                status.setText("Arquivo inv√°lido.");
             }
         }
 
@@ -302,12 +316,11 @@ public class EditorGrafico extends JFrame {
             Cursor cursor = toolkit.createCustomCursor(image, hotSpot, "Cursor");
             this.setCursor(cursor);*/
 
-            for (int i = 0; i < botoes.length; i++)
-                botoes[i].setUp(false);
+            zerarBotoes();
             this.setUp(true);
 
             status.setText(mensagem);
-            repaint();
+            EditorGrafico.this.repaint();
 
             switch (btnStatus) {
                 case 0:
