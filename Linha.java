@@ -15,7 +15,7 @@ public class Linha extends Figura {
     
     public Linha(float x1, float y1, float x2, float y2, Color cor, int ordem, int tamanho, float tracejado) {
         this.x = x1;
-        this.y = x2;
+        this.y = y1;
         this.x2 = x2;
         this.y2 = y2;
         

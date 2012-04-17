@@ -8,11 +8,11 @@ public class Circulo extends Figura
    private float raio;
    private Color corFundo;
    
-   public Circulo (int xCentro, int yCentro, int novoRaio, Color novaCor, Color corFundo, int ordem) {
+   public Circulo (float xCentro, float yCentro, float novoRaio, Color novaCor, Color corFundo, int ordem) {
        this (xCentro, yCentro, novoRaio, novaCor, corFundo, ordem, 1, 0);
    }
            
-   public Circulo (int xCentro, int yCentro, int novoRaio, Color novaCor, Color corFundo, int ordem, int tamanho, float tracejado) 
+   public Circulo (float xCentro, float yCentro, float novoRaio, Color novaCor, Color corFundo, int ordem, int tamanho, float tracejado) 
    {
         this.x = xCentro;
         this.y = yCentro;
@@ -41,8 +41,10 @@ public class Circulo extends Figura
         int yCentro = c.converteY(y);
         int raioEmX = c.converter(raio);
         Graphics2D g2d = (Graphics2D) g.create ();
-        g2d.setColor  (this.corFundo);
-        g2d.fillOval(xCentro - raioEmX, yCentro - raioEmX, 2*raioEmX,2*raioEmX);
+        if (this.corFundo != null) {
+            g2d.setColor  (this.corFundo);
+            g2d.fillOval(xCentro - raioEmX, yCentro - raioEmX, 2*raioEmX,2*raioEmX);
+        }
         g2d.setColor  (this.cor);
         g2d.setStroke (this.stroke);
         g2d.drawOval(xCentro - raioEmX, yCentro - raioEmX, 2*raioEmX,2*raioEmX);
